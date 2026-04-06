@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Databricks
+.databricks/
+*.dbc
+
+# Power BI temp
+*.pbix.tmp
+~$*.pbix
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Local secrets (never commit)
+secrets.json
+*.pem
+*.key
+
+# Full-size raw data (only samples are tracked)
+data/raw/
+data/full/
+data/*.csv
+!data/samples/**
