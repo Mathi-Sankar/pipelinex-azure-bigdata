@@ -1,0 +1,97 @@
+{
+  "name": "pl_ingest_csv_to_bronze",
+  "properties": {
+    "description": "Copies Olist CSVs from HTTP source (or Blob staging) into the Bronze container on ADLS Gen2, partitioned by ingestion date.",
+    "activities": [
+      {
+        "name": "CopyOlistCsvs",
+        "type": "ForEach",
+        "typeProperties": {
+          "items": {
+            "value": "@pipeline().parameters.tables",
+            "type": "Expression"
+          },
+          "isSequential": false,
+          "batchCount": 4,
+          "activities": [
+            {
+              "name": "CopyOneCsv",
+              "type": "Copy",
+              "inputs": [
+                {
+                  "referenceName": "ds_http_olist_csv",
+                  "type": "DatasetReference",
+                  "parameters": {
+                    "table": {
+                      "value": "@item()",
+                      "type": "Expression"
+                    }
+                  }
+                }
+              ],
+              "outputs": [
+                {
+                  "referenceName": "ds_adls_bronze_csv",
+                  "type": "DatasetReference",
+                  "parameters": {
+                    "table": {
+                      "value": "@item()",
+                      "type": "Expression"
+                    },
+                    "ingest_date": {
+                      "value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
+                      "type": "Expression"
+                    }
+                  }
+                }
+              ],
+              "typeProperties": {
+                "source": {
+                  "type": "DelimitedTextSource",
+                  "storeSettings": { "type": "HttpReadSettings", "requestMethod": "GET" },
+                  "formatSettings": { "type": "DelimitedTextReadSettings" }
+                },
+                "sink": {
+                  "type": "DelimitedTextSink",
+                  "storeSettings": { "type": "AzureBlobFSWriteSettings" },
+                  "formatSettings": { "type": "DelimitedTextWriteSettings", "fileExtension": ".csv" }
+                },
+                "enableStaging": false,
+                "translator": { "type": "TabularTranslator", "typeConversion": true }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "TriggerSilverNotebook",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          { "activity": "CopyOlistCsvs", "dependencyConditions": ["Succeeded"] }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_databricks",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/Repos/pipelinex/databricks_notebooks/01_bronze_to_silver",
+          "baseParameters": {
+            "storage_account": "pipelinexlake",
+            "bronze_container": "bronze",
+            "silver_container": "silver"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "tables": {
+        "type": "Array",
+        "defaultValue": [
+          "orders", "order_items", "customers", "products",
+          "sellers", "payments", "reviews"
+        ]
+      }
+    },
+    "annotations": ["bronze", "olist"]
+  }
+}
