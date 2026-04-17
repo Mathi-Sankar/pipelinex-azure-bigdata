@@ -1,0 +1,66 @@
+{
+  "name": "pl_ingest_mongodb_to_bronze",
+  "properties": {
+    "description": "Snapshots the MongoDB Atlas product_catalogue collection into ADLS Gen2 Bronze as JSONL, then hands off to the Databricks gold notebook.",
+    "activities": [
+      {
+        "name": "CopyMongoCatalogue",
+        "type": "Copy",
+        "inputs": [
+          {
+            "referenceName": "ds_mongo_product_catalogue",
+            "type": "DatasetReference"
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "ds_adls_bronze_mongo",
+            "type": "DatasetReference",
+            "parameters": {
+              "collection": "product_catalogue",
+              "ingest_date": {
+                "value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
+                "type": "Expression"
+              }
+            }
+          }
+        ],
+        "typeProperties": {
+          "source": {
+            "type": "MongoDbV2Source",
+            "batchSize": 1000,
+            "cursorMethods": { "sort": "{ _id : 1 }" }
+          },
+          "sink": {
+            "type": "JsonSink",
+            "storeSettings": { "type": "AzureBlobFSWriteSettings" },
+            "formatSettings": { "type": "JsonWriteSettings", "filePattern": "setOfObjects" }
+          },
+          "enableStaging": false
+        }
+      },
+      {
+        "name": "TriggerGoldNotebook",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          { "activity": "CopyMongoCatalogue", "dependencyConditions": ["Succeeded"] }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_databricks",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/Repos/pipelinex/databricks_notebooks/02_silver_to_gold",
+          "baseParameters": {
+            "storage_account": "pipelinexlake",
+            "silver_container": "silver",
+            "gold_container": "gold",
+            "mongo_database": "pipelinex",
+            "mongo_collection": "product_catalogue"
+          }
+        }
+      }
+    ],
+    "annotations": ["bronze", "mongodb", "enrichment"]
+  }
+}
