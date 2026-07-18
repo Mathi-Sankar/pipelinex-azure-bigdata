@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bronze" x1="0" x2="1"><stop offset="0" stop-color="#cd7f32"/><stop offset="1" stop-color="#8c5a24"/></linearGradient>
+    <linearGradient id="silver" x1="0" x2="1"><stop offset="0" stop-color="#c0c0c0"/><stop offset="1" stop-color="#909090"/></linearGradient>
+    <linearGradient id="gold"   x1="0" x2="1"><stop offset="0" stop-color="#f4c430"/><stop offset="1" stop-color="#b8860b"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="620" fill="#0f172a"/>
+  <text x="600" y="40" fill="#f1f5f9" font-size="24" font-weight="700" text-anchor="middle">PipelineX — Azure Big Data Pipeline with MongoDB Enrichment</text>
+  <text x="600" y="68" fill="#94a3b8" font-size="14" text-anchor="middle">Medallion Architecture · Olist Brazilian E-Commerce · Delta Lake · Star Schema</text>
+
+  <!-- Sources -->
+  <g>
+    <rect x="40" y="120" width="180" height="80" rx="10" fill="#1e293b" stroke="#38bdf8"/>
+    <text x="130" y="150" fill="#f1f5f9" font-size="14" font-weight="600" text-anchor="middle">Olist CSVs</text>
+    <text x="130" y="172" fill="#94a3b8" font-size="12" text-anchor="middle">HTTP / Blob</text>
+    <text x="130" y="188" fill="#94a3b8" font-size="12" text-anchor="middle">100k orders</text>
+
+    <rect x="40" y="220" width="180" height="80" rx="10" fill="#1e293b" stroke="#22c55e"/>
+    <text x="130" y="250" fill="#f1f5f9" font-size="14" font-weight="600" text-anchor="middle">MongoDB Atlas</text>
+    <text x="130" y="272" fill="#94a3b8" font-size="12" text-anchor="middle">product_catalogue</text>
+    <text x="130" y="288" fill="#94a3b8" font-size="12" text-anchor="middle">enrichment docs</text>
+  </g>
+
+  <!-- ADF -->
+  <rect x="280" y="160" width="160" height="140" rx="10" fill="#1e40af" stroke="#60a5fa"/>
+  <text x="360" y="190" fill="#f1f5f9" font-size="15" font-weight="600" text-anchor="middle">Azure Data Factory</text>
+  <text x="360" y="220" fill="#dbeafe" font-size="11" text-anchor="middle">pl_ingest_csv_to_bronze</text>
+  <text x="360" y="238" fill="#dbeafe" font-size="11" text-anchor="middle">pl_ingest_mongodb_to_bronze</text>
+  <text x="360" y="272" fill="#93c5fd" font-size="11" text-anchor="middle">Daily 02:00 UTC</text>
+
+  <!-- Bronze -->
+  <rect x="490" y="120" width="150" height="380" rx="10" fill="url(#bronze)" opacity="0.9"/>
+  <text x="565" y="150" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">BRONZE</text>
+  <text x="565" y="172" fill="#fff" font-size="11" text-anchor="middle">ADLS Gen2</text>
+  <text x="565" y="210" fill="#fff" font-size="11" text-anchor="middle">Raw CSVs</text>
+  <text x="565" y="228" fill="#fff" font-size="11" text-anchor="middle">Mongo JSONL</text>
+  <text x="565" y="264" fill="#fff" font-size="10" text-anchor="middle">Partitioned by</text>
+  <text x="565" y="280" fill="#fff" font-size="10" text-anchor="middle">ingest_date</text>
+  <text x="565" y="470" fill="#fff" font-size="10" text-anchor="middle">Immutable</text>
+
+  <!-- Silver -->
+  <rect x="690" y="120" width="150" height="380" rx="10" fill="url(#silver)" opacity="0.9"/>
+  <text x="765" y="150" fill="#000" font-size="16" font-weight="700" text-anchor="middle">SILVER</text>
+  <text x="765" y="172" fill="#000" font-size="11" text-anchor="middle">Delta Lake</text>
+  <text x="765" y="210" fill="#000" font-size="11" text-anchor="middle">Typed, cleaned</text>
+  <text x="765" y="228" fill="#000" font-size="11" text-anchor="middle">deduplicated</text>
+  <text x="765" y="264" fill="#000" font-size="10" text-anchor="middle">01_bronze_to_silver</text>
+  <text x="765" y="280" fill="#000" font-size="10" text-anchor="middle">Databricks PySpark</text>
+  <text x="765" y="470" fill="#000" font-size="10" text-anchor="middle">Business entities</text>
+
+  <!-- Gold -->
+  <rect x="890" y="120" width="150" height="380" rx="10" fill="url(#gold)" opacity="0.95"/>
+  <text x="965" y="150" fill="#000" font-size="16" font-weight="700" text-anchor="middle">GOLD</text>
+  <text x="965" y="172" fill="#000" font-size="11" text-anchor="middle">Delta Star Schema</text>
+  <text x="965" y="210" fill="#000" font-size="11" text-anchor="middle">fact_sales</text>
+  <text x="965" y="228" fill="#000" font-size="11" text-anchor="middle">dim_customer</text>
+  <text x="965" y="246" fill="#000" font-size="11" text-anchor="middle">dim_product</text>
+  <text x="965" y="264" fill="#000" font-size="11" text-anchor="middle">dim_seller</text>
+  <text x="965" y="282" fill="#000" font-size="11" text-anchor="middle">dim_date</text>
+  <text x="965" y="320" fill="#000" font-size="10" text-anchor="middle">02_silver_to_gold</text>
+  <text x="965" y="336" fill="#000" font-size="10" text-anchor="middle">+ Mongo enrichment</text>
+  <text x="965" y="470" fill="#000" font-size="10" text-anchor="middle">SCD Type 2</text>
+
+  <!-- Consumers -->
+  <rect x="1080" y="150" width="100" height="80" rx="10" fill="#1e293b" stroke="#a855f7"/>
+  <text x="1130" y="180" fill="#f1f5f9" font-size="12" font-weight="600" text-anchor="middle">Synapse</text>
+  <text x="1130" y="196" fill="#f1f5f9" font-size="12" font-weight="600" text-anchor="middle">Serverless</text>
+  <text x="1130" y="216" fill="#c084fc" font-size="10" text-anchor="middle">External tables</text>
+
+  <rect x="1080" y="260" width="100" height="80" rx="10" fill="#1e293b" stroke="#facc15"/>
+  <text x="1130" y="290" fill="#f1f5f9" font-size="12" font-weight="600" text-anchor="middle">Power BI</text>
+  <text x="1130" y="306" fill="#f1f5f9" font-size="12" font-weight="600" text-anchor="middle">Desktop</text>
+  <text x="1130" y="326" fill="#fde68a" font-size="10" text-anchor="middle">DirectQuery</text>
+
+  <!-- Arrows -->
+  <line x1="220" y1="160" x2="280" y2="200" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="220" y1="260" x2="280" y2="240" stroke="#22c55e" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="440" y1="230" x2="490" y2="270" stroke="#93c5fd" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="640" y1="300" x2="690" y2="300" stroke="#e2e8f0" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="840" y1="300" x2="890" y2="300" stroke="#e2e8f0" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1040" y1="200" x2="1080" y2="190" stroke="#c084fc" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1080" y1="300" x2="1080" y2="300" stroke="#facc15" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1040" y1="330" x2="1080" y2="300" stroke="#facc15" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Legend -->
+  <text x="40" y="560" fill="#94a3b8" font-size="12" font-weight="600">Stack</text>
+  <text x="40" y="580" fill="#e2e8f0" font-size="11">Azure Data Factory · ADLS Gen2 · Databricks (PySpark) · Delta Lake · MongoDB Atlas · Synapse Serverless SQL · Power BI</text>
+  <text x="40" y="600" fill="#94a3b8" font-size="11">Cost: $0 — GitHub Student Azure credits + Databricks Community Edition + MongoDB Atlas Free Tier (M0) + Synapse first 1 TB/month free</text>
+</svg>
