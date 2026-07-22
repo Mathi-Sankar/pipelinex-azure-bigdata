@@ -13,6 +13,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Cost](https://img.shields.io/badge/Running%20Cost-%240-brightgreen)]()
 
+**🔗 Live dashboard:** https://pipelinex-azure-bigdata.vercel.app
+· **API:** https://pipelinex-analytics.onrender.com/docs
+· **Code:** [GitHub](https://github.com/Mathi-Sankar/pipelinex-azure-bigdata)
+
+> The live dashboard is a React SPA on Vercel calling a FastAPI backend on
+> Render. The backend is on a free tier, so the first request after idle
+> takes ~50s to wake — give it a moment on first load.
+
 ---
 
 ## What this project does
