@@ -121,18 +121,23 @@ def state_revenue() -> list[dict]:
 
 @app.get("/api/revenue-trend")
 def revenue_trend() -> list[dict]:
-    """Monthly revenue trend over the dataset's active period."""
-    d = _load()
-    fact = d["fact"].copy()
-    fact["order_date"] = pd.to_datetime(fact["order_date"], errors="coerce")
-    fact = fact.dropna(subset=["order_date"])
-    fact["month"] = fact["order_date"].dt.to_period("M").astype(str)
+    """Monthly revenue trend over the dataset's active period.
+
+    order_date is already an ISO 'YYYY-MM-DD' string, so we slice the month
+    directly instead of parsing datetimes — far lighter on memory (important
+    on small free-tier instances).
+    """
+    fact = _load()["fact"]
+    month = fact["order_date"].astype(str).str.slice(0, 7)
     grouped = (
-        fact.groupby("month")
+        fact.assign(month=month)
+        .dropna(subset=["month"])
+        .groupby("month")
         .agg(revenue=("gross_revenue", "sum"), orders=("order_id", "nunique"))
         .reset_index()
         .sort_values("month")
     )
+    grouped = grouped[grouped["month"].str.match(r"\d{4}-\d{2}")]
     return [
         {"month": row["month"], "revenue": round(float(row["revenue"]), 2), "orders": int(row["orders"])}
         for _, row in grouped.iterrows()
