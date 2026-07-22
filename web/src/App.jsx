@@ -34,21 +34,44 @@ export default function App() {
   const [states, setStates] = useState([]);
   const [trend, setTrend] = useState([]);
   const [error, setError] = useState(null);
+  const [waking, setWaking] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetchJSON("/api/kpis"),
-      fetchJSON("/api/top-categories?limit=10"),
-      fetchJSON("/api/state-revenue"),
-      fetchJSON("/api/revenue-trend"),
-    ])
-      .then(([k, c, s, t]) => {
+    let cancelled = false;
+    const MAX_ATTEMPTS = 20; // ~100s of retries — covers Render free-tier cold start
+
+    async function load(attempt = 0) {
+      try {
+        const [k, c, s, t] = await Promise.all([
+          fetchJSON("/api/kpis"),
+          fetchJSON("/api/top-categories?limit=10"),
+          fetchJSON("/api/state-revenue"),
+          fetchJSON("/api/revenue-trend"),
+        ]);
+        if (cancelled) return;
         setKpis(k);
         setCategories(c);
         setStates(s.slice(0, 10));
         setTrend(t);
-      })
-      .catch((e) => setError(e.message));
+        setWaking(false);
+        setError(null);
+      } catch (e) {
+        if (cancelled) return;
+        // The backend is likely still waking from sleep — retry with a delay.
+        if (attempt < MAX_ATTEMPTS) {
+          setWaking(true);
+          setTimeout(() => load(attempt + 1), 5000);
+        } else {
+          setWaking(false);
+          setError(e.message);
+        }
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const kpiCards = kpis
@@ -83,10 +106,17 @@ export default function App() {
         </div>
       </header>
 
+      {waking && !kpis && !error && (
+        <div className="flex items-center gap-3 rounded-lg border border-sky/40 bg-sky/10 p-4 text-sky">
+          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-sky border-t-transparent" />
+          Waking up the backend (free tier sleeps after inactivity) — the dashboard will load
+          automatically in a few seconds…
+        </div>
+      )}
+
       {error && (
         <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-red-300">
-          Failed to load data: {error}. If the backend is on Render's free tier, it may be waking
-          up — refresh in ~30 seconds.
+          Failed to load data: {error}. Please refresh the page.
         </div>
       )}
 
