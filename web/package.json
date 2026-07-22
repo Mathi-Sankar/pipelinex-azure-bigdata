@@ -1,0 +1,25 @@
+{
+  "name": "pipelinex-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "React dashboard for the PipelineX Azure data pipeline",
+  "author": "Mathi Sankar M R",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.13.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.0.7"
+  }
+}

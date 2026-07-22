@@ -17,16 +17,14 @@ from functools import lru_cache
 import pandas as pd
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GOLD_DIR = REPO_ROOT / "powerbi" / "gold_export"
-FRONTEND_DIR = REPO_ROOT / "frontend"
 
 app = FastAPI(
     title="PipelineX Analytics API",
-    description="REST API over the Gold star-schema from the Azure Databricks pipeline.",
+    description="REST API over the Gold star-schema from the Azure Databricks pipeline. "
+    "Consumed by the React dashboard (deployed separately on Vercel).",
     version="1.0.0",
 )
 
@@ -172,12 +170,15 @@ def top_sellers(limit: int = Query(10, ge=1, le=50)) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- #
-# Serve the static frontend at the root path.
+# Root — points visitors at the interactive API docs.
 # --------------------------------------------------------------------------- #
 @app.get("/")
-def index() -> FileResponse:
-    return FileResponse(FRONTEND_DIR / "index.html")
-
-
-if FRONTEND_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+def root() -> dict:
+    return {
+        "service": "PipelineX Analytics API",
+        "docs": "/docs",
+        "endpoints": [
+            "/api/health", "/api/kpis", "/api/top-categories",
+            "/api/state-revenue", "/api/revenue-trend", "/api/top-sellers",
+        ],
+    }

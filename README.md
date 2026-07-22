@@ -92,9 +92,17 @@ review score. São Paulo dominates state revenue at ~R$ 6M.*
              │     GOLD      │   fact_sales (grain: order_item)
              │  Star Schema  │   + 4 conformed dimensions
              └───────┬───────┘   MongoDB enrichment joined
-                     ▼
-              Power BI Dashboard
+                     │
+        ┌────────────┴────────────┐
+        ▼                         ▼
+  Power BI Service         FastAPI backend (Render)
+  (published report)             │
+                          React dashboard (Vercel)
 ```
+
+Two serving layers consume the same Gold star-schema: a **Power BI** report and a
+custom **FastAPI + React** web app (REST API on Render, React/Vite SPA on Vercel,
+tested in CI with GitHub Actions).
 
 Full architecture diagram: [`docs/architecture.svg`](docs/architecture.svg)
 
@@ -109,8 +117,11 @@ Full architecture diagram: [`docs/architecture.svg`](docs/architecture.svg)
 | **Compute** | Azure Databricks (Spark 3.5.2) | Runs PySpark transformations |
 | **Table format** | Delta Lake | ACID writes, SCD Type 2, OPTIMIZE ZORDER |
 | **NoSQL** | MongoDB Atlas M0 | Product-catalogue enrichment (32,951 docs) |
-| **Visualisation** | Power BI Service | Interactive dashboard published on Azure identity |
-| **Language** | Python 3 + PySpark | All transformation logic |
+| **BI** | Power BI Service | Interactive report published on Azure identity |
+| **API** | FastAPI + pandas (Render) | REST API over the Gold star-schema |
+| **Web app** | React + Vite + Tailwind + Recharts (Vercel) | Custom analytics dashboard |
+| **CI/CD** | GitHub Actions | Runs pytest on every push |
+| **Language** | Python 3 · PySpark · JavaScript | Transformations + API + frontend |
 
 ---
 

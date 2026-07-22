@@ -81,7 +81,9 @@ def test_top_sellers():
     assert all("seller_id" in row for row in data)
 
 
-def test_frontend_served_at_root():
+def test_root_returns_service_info():
     r = client.get("/")
     assert r.status_code == 200
-    assert "PipelineX" in r.text
+    body = r.json()
+    assert body["service"] == "PipelineX Analytics API"
+    assert "/api/kpis" in body["endpoints"]
