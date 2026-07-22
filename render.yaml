@@ -1,0 +1,12 @@
+# Render deployment blueprint for the PipelineX Analytics API + dashboard.
+# Render auto-detects this file; deploys on every push to main once the repo
+# is connected at https://dashboard.render.com.
+services:
+  - type: web
+    name: pipelinex-analytics
+    runtime: python
+    plan: free
+    buildCommand: pip install -r api/requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true

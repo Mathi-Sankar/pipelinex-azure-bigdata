@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PipelineX — Olist E-Commerce Analytics</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-2: #243349;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    header { margin-bottom: 24px; }
+    h1 { font-size: 1.8rem; font-weight: 700; }
+    .subtitle { color: var(--muted); margin-top: 4px; font-size: 0.95rem; }
+    .badge-row { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge {
+      font-size: 0.72rem; padding: 3px 10px; border-radius: 999px;
+      background: var(--panel-2); color: var(--accent); border: 1px solid var(--border);
+    }
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px; margin-bottom: 24px;
+    }
+    .kpi {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+    }
+    .kpi .value { font-size: 1.9rem; font-weight: 700; color: var(--text); }
+    .kpi .label { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+    .charts {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;
+    }
+    .card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+    }
+    .card.full { grid-column: 1 / -1; }
+    .card h2 { font-size: 1rem; margin-bottom: 16px; font-weight: 600; }
+    canvas { max-width: 100%; }
+    footer {
+      margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 0.85rem; text-align: center;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    .loading { color: var(--muted); padding: 40px; text-align: center; }
+    @media (max-width: 800px) { .charts { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PipelineX — Olist E-Commerce Analytics</h1>
+    <p class="subtitle">
+      Live dashboard served by a FastAPI backend over the Gold star-schema
+      produced by an Azure Databricks + Delta Lake pipeline. Built by Mathi Sankar M R.
+    </p>
+    <div class="badge-row">
+      <span class="badge">Azure Databricks</span>
+      <span class="badge">ADLS Gen2</span>
+      <span class="badge">Delta Lake</span>
+      <span class="badge">MongoDB Atlas</span>
+      <span class="badge">FastAPI</span>
+      <span class="badge">CI/CD</span>
+    </div>
+  </header>
+
+  <section class="kpi-grid" id="kpis">
+    <div class="loading">Loading KPIs…</div>
+  </section>
+
+  <section class="charts">
+    <div class="card">
+      <h2>Top Categories by Revenue</h2>
+      <canvas id="categoriesChart" height="260"></canvas>
+    </div>
+    <div class="card">
+      <h2>Revenue by State</h2>
+      <canvas id="stateChart" height="260"></canvas>
+    </div>
+    <div class="card full">
+      <h2>Monthly Revenue Trend</h2>
+      <canvas id="trendChart" height="120"></canvas>
+    </div>
+  </section>
+
+  <footer>
+    Data: <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Olist Brazilian E-Commerce (Kaggle)</a>
+    · Code: <a href="https://github.com/Mathi-Sankar/pipelinex-azure-bigdata" target="_blank" rel="noopener">GitHub</a>
+    · Pipeline runs on Microsoft Azure
+  </footer>
+
+  <!-- Chart.js is loaded from CDN; app logic follows. -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script>
+    // API base: same origin in production, localhost in dev.
+    const API = window.location.origin.includes("localhost")
+      ? "http://localhost:8000"
+      : "";
+
+    const fmtBRL = (n) =>
+      "R$ " + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+    const fmtNum = (n) => n.toLocaleString("en-US");
+
+    const CHART_DEFAULTS = {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: "#94a3b8" }, grid: { color: "#334155" } },
+        y: { ticks: { color: "#94a3b8" }, grid: { color: "#334155" } },
+      },
+    };
+
+    async function get(path) {
+      const res = await fetch(API + path);
+      if (!res.ok) throw new Error(`${path} → ${res.status}`);
+      return res.json();
+    }
+
+    async function loadKpis() {
+      const k = await get("/api/kpis");
+      const cards = [
+        { value: fmtBRL(k.total_revenue), label: "Total Revenue" },
+        { value: fmtNum(k.total_orders), label: "Orders" },
+        { value: fmtNum(k.total_customers), label: "Customers" },
+        { value: fmtNum(k.total_products), label: "Products" },
+        { value: k.avg_review_score.toFixed(2), label: "Avg Review Score" },
+        { value: k.avg_delivery_days.toFixed(1) + " d", label: "Avg Delivery" },
+      ];
+      document.getElementById("kpis").innerHTML = cards
+        .map(
+          (c) =>
+            `<div class="kpi"><div class="value">${c.value}</div><div class="label">${c.label}</div></div>`
+        )
+        .join("");
+    }
+
+    async function loadCategories() {
+      const data = await get("/api/top-categories?limit=10");
+      new Chart(document.getElementById("categoriesChart"), {
+        type: "bar",
+        data: {
+          labels: data.map((d) => d.category),
+          datasets: [{ data: data.map((d) => d.revenue), backgroundColor: "#38bdf8" }],
+        },
+        options: { ...CHART_DEFAULTS, indexAxis: "y" },
+      });
+    }
+
+    async function loadStates() {
+      const data = (await get("/api/state-revenue")).slice(0, 10);
+      new Chart(document.getElementById("stateChart"), {
+        type: "bar",
+        data: {
+          labels: data.map((d) => d.state),
+          datasets: [{ data: data.map((d) => d.revenue), backgroundColor: "#22c55e" }],
+        },
+        options: { ...CHART_DEFAULTS, indexAxis: "y" },
+      });
+    }
+
+    async function loadTrend() {
+      const data = await get("/api/revenue-trend");
+      new Chart(document.getElementById("trendChart"), {
+        type: "line",
+        data: {
+          labels: data.map((d) => d.month),
+          datasets: [
+            {
+              data: data.map((d) => d.revenue),
+              borderColor: "#38bdf8",
+              backgroundColor: "rgba(56,189,248,0.1)",
+              fill: true,
+              tension: 0.3,
+              pointRadius: 2,
+            },
+          ],
+        },
+        options: CHART_DEFAULTS,
+      });
+    }
+
+    Promise.all([loadKpis(), loadCategories(), loadStates(), loadTrend()]).catch(
+      (err) => {
+        document.getElementById("kpis").innerHTML =
+          `<div class="loading">Failed to load data: ${err.message}</div>`;
+      }
+    );
+  </script>
+</body>
+</html>
